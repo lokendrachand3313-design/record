@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>SlideStudio Pro – Present, Annotate, Record</title>
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none; /* avoid accidental text selection while drawing, but can be toggled if needed */
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0b1120;
+      height: 100vh;
+      overflow: hidden;
+      color: #eef2ff;
+    }
+
+    /* MAIN LAYOUT: fullscreen slide area + floating camera + toolbar */
+    .presentation-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: #0a0f1c;
+      overflow: hidden;
+    }
+
+    /* IFRAME wrapper for google slides (full window) */
+    .slides-iframe-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background: #1e293b;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: white;
+    }
+
+    /* CANVAS OVERLAY for drawing (highlights, markers, texts) */
+    .draw-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: auto; /* allows drawing on top of slides */
+      cursor: crosshair;
+    }
+
+    /* Floating Camera Widget (small area, draggable) */
+    .camera-widget {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      width: 240px;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      z-index: 30;
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.5);
+      transition: 0.2s;
+      cursor: move;
+      overflow: hidden;
+    }
+
+    .camera-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.6);
+      font-size: 12px;
+      font-weight: 500;
+      color: white;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      cursor: grab;
+    }
+    .camera-header:active { cursor: grabbing; }
+    .cam-controls button {
+      background: none;
+      border: none;
+      color: white;
+      margin-left: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      opacity: 0.8;
+      transition: 0.2s;
+    }
+    .cam-controls button:hover { opacity: 1; transform: scale(1.05);}
+    .video-preview {
+      width: 100%;
+      background: #000;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .camera-placeholder {
+      color: #aaa;
+      font-size: 12px;
+      text-align: center;
+      width: 100%;
+    }
+
+    /* FLOATING TOOLBAR for annotation & recording */
+    .annotation-toolbar {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(16px);
+      border-radius: 60px;
+      padding: 10px 20px;
+      display: flex;
+      gap: 12px;
+      z-index: 40;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      font-size: 14px;
+    }
+    .tool-btn {
+      background: #1e293b;
+      border: none;
+      color: #f1f5f9;
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-size: 14px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .tool-btn i { font-size: 16px; }
+    .tool-btn.active {
+      background: #3b82f6;
+      color: white;
+      box-shadow: 0 0 8px #3b82f6;
+    }
+    .tool-btn.danger {
+      background: #dc2626;
+    }
+    .tool-btn.danger:hover { background: #b91c1c; }
+    .tool-btn:hover { background: #334155; transform: scale(1.02);}
+    .color-picker-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #0f172a;
+      padding: 0 12px;
+      border-radius: 40px;
+    }
+    #strokeColor {
+      width: 32px;
+      height: 32px;
+      border: 2px solid white;
+      border-radius: 50%;
+      cursor: pointer;
+      background: #f97316;
+    }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #0f172a;
+      padding: 0 12px;
+      border-radius: 40px;
+    }
+    input[type="range"] { width: 80px; cursor: pointer; }
+
+    /* recording status */
+    .rec-badge {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #ef4444;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-weight: bold;
+      font-size: 13px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 8px black;
+      pointer-events: none;
+    }
+    .hidden { display: none; }
+
+    /* small text tool input (floating) */
+    .text-tool-input {
+      position: fixed;
+      background: #1e293b;
+      border: 2px solid #3b82f6;
+      padding: 8px;
+      border-radius: 12px;
+      z-index: 200;
+      box-shadow: 0 8px 20px black;
+    }
+    .text-tool-input input {
+      background: white;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 16px;
+      width: 180px;
+      font-family: 'Inter', sans-serif;
+    }
+    .text-tool-input button {
+      background: #3b82f6;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      margin-left: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="presentation-container">
+  <!-- Google Slides iframe - replace with your published PPT link (Edit mode ? or presentation mode) -->
+  <div class="slides-iframe-wrapper">
+    <iframe id="pptFrame" src="https://docs.google.com/presentation/d/e/2PACX-1vQ6mTmq_Z1e9x_l7FI0FAklWbD03pViw1qW0cAYl-PblvY5VhN9tq3BwWYrLGtkpvstnN9Fuyf4Sf5H/embed?start=false&loop=false&delayms=3000" frameborder="0" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+  </div>
+
+  <!-- Drawing Canvas (markers, highlights, text over slides) -->
+  <canvas id="drawCanvas" class="draw-canvas"></canvas>
+
+  <!-- Floating Camera Widget (draggable) -->
+  <div id="cameraWidget" class="camera-widget" style="display: flex; flex-direction: column;">
+    <div class="camera-header" id="dragHandle">
+      <span><i class="fas fa-video"></i> Presenter Cam</span>
+      <div class="cam-controls">
+        <button id="toggleCamBtn" title="Start/Stop Camera"><i class="fas fa-power-off"></i></button>
+      </div>
+    </div>
+    <div class="video-preview" id="videoContainer">
+      <video id="localVideo" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+    </div>
+  </div>
+
+  <!-- Annotation & Recording Toolbar -->
+  <div class="annotation-toolbar">
+    <div class="color-picker-group">
+      <label style="font-size:12px;">🎨</label>
+      <input type="color" id="strokeColor" value="#f97316">
+    </div>
+    <div class="slider-container">
+      <i class="fas fa-pen-fancy"></i>
+      <input type="range" id="brushSize" min="2" max="30" value="4">
+      <span id="sizeValue" style="font-size:12px; width:28px;">4px</span>
+    </div>
+    <button id="penModeBtn" class="tool-btn active"><i class="fas fa-paintbrush"></i> Pen</button>
+    <button id="highlightModeBtn" class="tool-btn"><i class="fas fa-highlighter"></i> Highlighter</button>
+    <button id="textModeBtn" class="tool-btn"><i class="fas fa-font"></i> Text</button>
+    <button id="clearCanvasBtn" class="tool-btn"><i class="fas fa-eraser"></i> Clear</button>
+    <button id="recordScreenBtn" class="tool-btn"><i class="fas fa-desktop"></i> 🎙️ Rec Screen</button>
+    <span style="margin:0 4px; color:#475569;">|</span>
+    <button id="fullscreenBtn" class="tool-btn"><i class="fas fa-expand"></i> Fullscreen</button>
+  </div>
+
+  <!-- Recording status indicator -->
+  <div id="recStatus" class="rec-badge hidden">
+    <i class="fas fa-circle" style="color:#ff4d4d; font-size:12px;"></i> RECORDING (Screen+Mic)
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ---------- DOM elements ----------
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    const pptFrame = document.getElementById('pptFrame');
+
+    // annotation state
+    let drawing = false;
+    let mode = 'pen';     // 'pen', 'highlighter', 'text'
+    let currentColor = '#f97316';
+    let brushWidth = 4;
+    
+    // for highlighter semi-transparent
+    let highlighterColor = 'rgba(255, 235, 90, 0.45)';
+    
+    function updateStyles() {
+      if (mode === 'highlighter') {
+        ctx.globalAlpha = 0.55;
+        ctx.strokeStyle = highlighterColor;
+        ctx.fillStyle = highlighterColor;
+      } else {
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = currentColor;
+        ctx.fillStyle = currentColor;
+      }
+      ctx.lineWidth = brushWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+    
+    // resize canvas to cover full window
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      // restore saved drawing after resize? For simplicity we just clear? But better redraw from saved imageData
+      // we keep a backup drawing layer
+      if (window.savedCanvasData) {
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0);
+        };
+        img.src = window.savedCanvasData;
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      updateStyles();
+    }
+    
+    // store drawings on resize / before clear: but we'll keep a backup variable for drawings.
+    function storeCanvasData() {
+      try {
+        window.savedCanvasData = canvas.toDataURL();
+      } catch(e) {}
+    }
+    
+    // drawing events
+    function startDrawing(e) {
+      if (mode === 'text') return;
+      drawing = true;
+      const pos = getCanvasCoords(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      ctx.lineTo(pos.x + 0.5, pos.y + 0.5);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+    
+    function draw(e) {
+      if (!drawing) return;
+      if (mode === 'text') return;
+      const pos = getCanvasCoords(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+    
+    function stopDrawing() {
+      drawing = false;
+      ctx.beginPath();
+      storeCanvasData();
+    }
+    
+    function getCanvasCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      let clientX, clientY;
+      if (e.touches) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+        e.preventDefault();
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+      let x = (clientX - rect.left) * scaleX;
+      let y = (clientY - rect.top) * scaleY;
+      x = Math.min(Math.max(0, x), canvas.width);
+      y = Math.min(Math.max(0, y), canvas.height);
+      return { x, y };
+    }
+    
+    // text tool: show input at click position
+    let textInputDiv = null;
+    function removeTextInput() {
+      if (textInputDiv) textInputDiv.remove();
+      textInputDiv = null;
+    }
+    
+    function showTextInputAt(x, y) {
+      removeTextInput();
+      const div = document.createElement('div');
+      div.className = 'text-tool-input';
+      div.style.left = x + 'px';
+      div.style.top = y + 'px';
+      const input = document.createElement('input');
+      input.placeholder = 'Type your text...';
+      const okBtn = document.createElement('button');
+      okBtn.textContent = 'Add';
+      okBtn.onclick = () => {
+        const text = input.value.trim();
+        if (text) {
+          drawTextOnCanvas(text, x, y);
+        }
+        removeTextInput();
+      };
+      div.appendChild(input);
+      div.appendChild(okBtn);
+      document.body.appendChild(div);
+      textInputDiv = div;
+      input.focus();
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') okBtn.click();
+      });
+    }
+    
+    function drawTextOnCanvas(text, clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      let canvasX = (clientX - rect.left) * scaleX;
+      let canvasY = (clientY - rect.top) * scaleY;
+      canvasX = Math.min(Math.max(0, canvasX), canvas.width);
+      canvasY = Math.min(Math.max(0, canvasY), canvas.height);
+      ctx.font = `${brushWidth * 4}px "Inter", system-ui`;
+      ctx.fillStyle = mode === 'highlighter' ? highlighterColor : currentColor;
+      ctx.shadowBlur = 0;
+      ctx.fillText(text, canvasX, canvasY);
+      storeCanvasData();
+    }
+    
+    function handleCanvasMouseDown(e) {
+      if (mode === 'text') {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.clientX;
+        const clientY = e.clientY;
+        showTextInputAt(clientX, clientY);
+        return;
+      }
+      startDrawing(e);
+    }
+    
+    // attach canvas events
+    canvas.addEventListener('mousedown', handleCanvasMouseDown);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+    // touch events
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleCanvasMouseDown(e); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+    canvas.addEventListener('touchend', stopDrawing);
+    
+    // UI buttons
+    const penBtn = document.getElementById('penModeBtn');
+    const highlighterBtn = document.getElementById('highlightModeBtn');
+    const textBtn = document.getElementById('textModeBtn');
+    const clearBtn = document.getElementById('clearCanvasBtn');
+    const colorPicker = document.getElementById('strokeColor');
+    const brushSlider = document.getElementById('brushSize');
+    const sizeSpan = document.getElementById('sizeValue');
+    
+    penBtn.addEventListener('click', () => {
+      mode = 'pen';
+      updateActiveButton(penBtn);
+      updateStyles();
+    });
+    highlighterBtn.addEventListener('click', () => {
+      mode = 'highlighter';
+      updateActiveButton(highlighterBtn);
+      updateStyles();
+    });
+    textBtn.addEventListener('click', () => {
+      mode = 'text';
+      updateActiveButton(textBtn);
+    });
+    function updateActiveButton(active) {
+      [penBtn, highlighterBtn, textBtn].forEach(btn => btn.classList.remove('active'));
+      active.classList.add('active');
+    }
+    colorPicker.addEventListener('input', (e) => {
+      currentColor = e.target.value;
+      highlighterColor = currentColor + 'aa'; // semi-transparent highlight variation
+      updateStyles();
+    });
+    brushSlider.addEventListener('input', (e) => {
+      brushWidth = parseInt(e.target.value);
+      sizeSpan.innerText = brushWidth + 'px';
+      updateStyles();
+    });
+    clearBtn.addEventListener('click', () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      storeCanvasData();
+    });
+    
+    // FULLSCREEN for entire container
+    const fullBtn = document.getElementById('fullscreenBtn');
+    fullBtn.addEventListener('click', () => {
+      const elem = document.documentElement;
+      if (!document.fullscreenElement) {
+        elem.requestFullscreen().catch(err => console.warn(err));
+      } else {
+        document.exitFullscreen();
+      }
+    });
+    
+    // ----- CAMERA MODULE -----
+    let cameraStream = null;
+    const localVideo = document.getElementById('localVideo');
+    const toggleCamBtn = document.getElementById('toggleCamBtn');
+    let cameraActive = false;
+    
+    async function startCamera() {
+      if (cameraStream) {
+        stopCamera();
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        cameraStream = stream;
+        localVideo.srcObject = stream;
+        cameraActive = true;
+        toggleCamBtn.innerHTML = '<i class="fas fa-stop"></i>';
+      } catch(err) {
+        alert("Camera error: " + err.message);
+      }
+    }
+    
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+        localVideo.srcObject = null;
+        cameraActive = false;
+        toggleCamBtn.innerHTML = '<i class="fas fa-video"></i>';
+      }
+    }
+    
+    toggleCamBtn.addEventListener('click', () => {
+      if (cameraActive) stopCamera();
+      else startCamera();
+    });
+    
+    // Draggable camera widget
+    const widget = document.getElementById('cameraWidget');
+    const dragHandle = document.getElementById('dragHandle');
+    let offsetX, offsetY, isDragging = false;
+    dragHandle.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.cam-controls')) return;
+      isDragging = true;
+      offsetX = e.clientX - widget.offsetLeft;
+      offsetY = e.clientY - widget.offsetTop;
+      widget.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      let left = e.clientX - offsetX;
+      let top = e.clientY - offsetY;
+      left = Math.min(Math.max(10, left), window.innerWidth - widget.offsetWidth - 10);
+      top = Math.min(Math.max(10, top), window.innerHeight - widget.offsetHeight - 10);
+      widget.style.left = left + 'px';
+      widget.style.right = 'auto';
+      widget.style.bottom = 'auto';
+      widget.style.top = top + 'px';
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; widget.style.cursor = ''; });
+    
+    // ----- SCREEN RECORDING with microphone -----
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let screenStream = null;
+    const recordBtn = document.getElementById('recordScreenBtn');
+    const recStatusDiv = document.getElementById('recStatus');
+    
+    async function startScreenRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        stopRecording();
+        return;
+      }
+      try {
+        // get display media + audio from mic
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // combine tracks
+        const combinedTracks = [...displayStream.getVideoTracks(), ...displayStream.getAudioTracks(), ...micStream.getAudioTracks()];
+        screenStream = new MediaStream(combinedTracks);
+        mediaRecorder = new MediaRecorder(screenStream, { mimeType: 'video/webm' });
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) recordedChunks.push(event.data);
+        };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `presentation_recording_${new Date().toISOString().slice(0,19)}.webm`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          if (screenStream) screenStream.getTracks().forEach(t => t.stop());
+          screenStream = null;
+          recStatusDiv.classList.add('hidden');
+          recordBtn.innerHTML = '<i class="fas fa-desktop"></i> 🎙️ Rec Screen';
+          recordBtn.classList.remove('danger');
+        };
+        mediaRecorder.start(1000);
+        recStatusDiv.classList.remove('hidden');
+        recordBtn.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
+        recordBtn.classList.add('danger');
+        // auto stop when screen share track ends
+        displayStream.getVideoTracks()[0].onended = () => {
+          if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording();
+        };
+      } catch(err) {
+        alert("Recording error: " + err.message);
+      }
+    }
+    
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+    }
+    
+    recordBtn.addEventListener('click', () => {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        stopRecording();
+      } else {
+        startScreenRecording();
+      }
+    });
+    
+    // resize observer & initial canvas setup
+    window.addEventListener('resize', () => {
+      storeCanvasData();
+      resizeCanvas();
+    });
+    resizeCanvas();
+    // initial load backup
+    window.savedCanvasData = null;
+    
+    // allow change of google slides iframe? but we keep placeholder editable (user can modify src)
+    // optional: you can edit the iframe source by adding an input, but main requirement is done.
+    // for better UX, we also show instructions.
+    console.log("Ready: Use Pen/Highlighter/Text, Camera, Screen+Mic Recording, Drag cam window, fullscreen mode.");
+  })();
+</script>
+</body>
+</html>
