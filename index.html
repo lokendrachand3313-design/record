@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>SlideStudio Pro – Present, Annotate, Record</title>
-  <!-- Google Fonts & Font Awesome Icons -->
+  <title>StudioCast | Whiteboard + Slides with Continuos Recording</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
@@ -12,138 +11,102 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      user-select: none; /* avoid accidental text selection while drawing, but can be toggled if needed */
     }
 
     body {
       font-family: 'Inter', sans-serif;
-      background: #0b1120;
+      background: #0a0f1c;
       height: 100vh;
       overflow: hidden;
       color: #eef2ff;
     }
 
-    /* MAIN LAYOUT: fullscreen slide area + floating camera + toolbar */
-    .presentation-container {
-      position: relative;
-      width: 100vw;
+    /* --- MAIN APP LAYOUT --- */
+    .app-container {
+      display: flex;
+      flex-direction: column;
       height: 100vh;
-      background: #0a0f1c;
+    }
+
+    /* TAB BAR */
+    .tab-bar {
+      display: flex;
+      background: #111827;
+      padding: 0 24px;
+      gap: 8px;
+      border-bottom: 1px solid #1e293b;
+      z-index: 50;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid transparent;
+    }
+    .tab-btn i { font-size: 1.2rem; }
+    .tab-btn.active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+      background: #0f172a;
+    }
+    .tab-btn:hover:not(.active) { color: #cbd5e1; background: #1e293b; }
+
+    /* PAGE CONTENT */
+    .page {
+      flex: 1;
+      position: relative;
+      display: none;
       overflow: hidden;
     }
-
-    /* IFRAME wrapper for google slides (full window) */
-    .slides-iframe-wrapper {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      background: #1e293b;
+    .page.active-page {
+      display: block;
     }
 
-    iframe {
+    /* ----- WHITEBOARD PAGE (full canvas) ----- */
+    .whiteboard-container {
+      position: relative;
       width: 100%;
       height: 100%;
-      border: none;
-      background: white;
-    }
-
-    /* CANVAS OVERLAY for drawing (highlights, markers, texts) */
-    .draw-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 10;
-      pointer-events: auto; /* allows drawing on top of slides */
+      background: #f8fafc;
       cursor: crosshair;
     }
-
-    /* Floating Camera Widget (small area, draggable) */
-    .camera-widget {
+    #wbCanvas {
       position: absolute;
-      bottom: 24px;
-      right: 24px;
-      width: 240px;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(12px);
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      z-index: 30;
-      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.5);
-      transition: 0.2s;
-      cursor: move;
-      overflow: hidden;
-    }
-
-    .camera-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-      background: rgba(0, 0, 0, 0.6);
-      font-size: 12px;
-      font-weight: 500;
-      color: white;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-      cursor: grab;
-    }
-    .camera-header:active { cursor: grabbing; }
-    .cam-controls button {
-      background: none;
-      border: none;
-      color: white;
-      margin-left: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      opacity: 0.8;
-      transition: 0.2s;
-    }
-    .cam-controls button:hover { opacity: 1; transform: scale(1.05);}
-    .video-preview {
-      width: 100%;
-      background: #000;
-      aspect-ratio: 4 / 3;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    video {
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      background: white;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
     }
-    .camera-placeholder {
-      color: #aaa;
-      font-size: 12px;
-      text-align: center;
-      width: 100%;
-    }
-
-    /* FLOATING TOOLBAR for annotation & recording */
-    .annotation-toolbar {
+    /* floating toolbar for whiteboard */
+    .wb-toolbar {
       position: absolute;
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.9);
-      backdrop-filter: blur(16px);
+      background: #1e293be6;
+      backdrop-filter: blur(12px);
+      padding: 10px 24px;
       border-radius: 60px;
-      padding: 10px 20px;
       display: flex;
-      gap: 12px;
-      z-index: 40;
-      border: 1px solid rgba(255,255,255,0.2);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-      font-size: 14px;
+      gap: 16px;
+      z-index: 30;
+      border: 1px solid #334155;
+      box-shadow: 0 12px 28px black;
     }
-    .tool-btn {
-      background: #1e293b;
+    .wb-tool-btn {
+      background: #0f172a;
       border: none;
-      color: #f1f5f9;
+      color: white;
       padding: 8px 18px;
       border-radius: 40px;
       font-size: 14px;
@@ -153,233 +116,390 @@
       gap: 8px;
       cursor: pointer;
       transition: 0.2s;
-      font-family: 'Inter', sans-serif;
     }
-    .tool-btn i { font-size: 16px; }
-    .tool-btn.active {
-      background: #3b82f6;
-      color: white;
-      box-shadow: 0 0 8px #3b82f6;
-    }
-    .tool-btn.danger {
-      background: #dc2626;
-    }
-    .tool-btn.danger:hover { background: #b91c1c; }
-    .tool-btn:hover { background: #334155; transform: scale(1.02);}
-    .color-picker-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #0f172a;
-      padding: 0 12px;
-      border-radius: 40px;
-    }
-    #strokeColor {
-      width: 32px;
-      height: 32px;
-      border: 2px solid white;
-      border-radius: 50%;
-      cursor: pointer;
-      background: #f97316;
-    }
-    .slider-container {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #0f172a;
-      padding: 0 12px;
-      border-radius: 40px;
-    }
-    input[type="range"] { width: 80px; cursor: pointer; }
+    .wb-tool-btn.active { background: #3b82f6; }
+    .wb-tool-btn:hover { background: #334155; }
 
-    /* recording status */
-    .rec-badge {
+    /* ----- SLIDES PAGE (google slides embed + link input) ----- */
+    .slides-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: #0f172a;
+    }
+    .link-controls {
+      background: #111827;
+      padding: 12px 20px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+      flex-wrap: wrap;
+    }
+    .link-controls label {
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+    }
+    #slideLinkInput {
+      flex: 1;
+      min-width: 280px;
+      padding: 10px 14px;
+      border-radius: 40px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: white;
+      font-size: 0.9rem;
+      font-family: monospace;
+    }
+    #loadSlideBtn {
+      background: #3b82f6;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 40px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    #loadSlideBtn:hover { background: #2563eb; }
+    .iframe-container {
+      flex: 1;
+      position: relative;
+      background: #020617;
+    }
+    #slidesIframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: white;
+    }
+    .info-hint {
+      font-size: 12px;
+      color: #64748b;
+      background: #1e293b;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    /* --- FLOATING CAMERA (persistent across pages) --- */
+    .global-camera {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 260px;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.3);
+      z-index: 100;
+      box-shadow: 0 20px 35px -10px black;
+      cursor: move;
+      transition: 0.1s;
+    }
+    .cam-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #000000aa;
+      border-radius: 20px 20px 0 0;
+      cursor: grab;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .cam-header:active { cursor: grabbing; }
+    .cam-preview {
+      aspect-ratio: 4/3;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .cam-badge {
+      background: #ef4444;
+      border-radius: 20px;
+      padding: 2px 8px;
+      font-size: 10px;
+    }
+    /* recording indicator */
+    .recording-global {
       position: fixed;
       top: 20px;
-      right: 20px;
-      background: #ef4444;
+      left: 20px;
+      background: #dc2626;
       padding: 6px 14px;
-      border-radius: 30px;
-      font-weight: bold;
+      border-radius: 40px;
       font-size: 13px;
-      z-index: 100;
+      font-weight: bold;
+      z-index: 200;
       display: flex;
       align-items: center;
-      gap: 8px;
-      box-shadow: 0 2px 8px black;
+      gap: 10px;
+      box-shadow: 0 2px 10px black;
       pointer-events: none;
     }
     .hidden { display: none; }
-
-    /* small text tool input (floating) */
-    .text-tool-input {
-      position: fixed;
-      background: #1e293b;
-      border: 2px solid #3b82f6;
-      padding: 8px;
-      border-radius: 12px;
-      z-index: 200;
-      box-shadow: 0 8px 20px black;
-    }
-    .text-tool-input input {
-      background: white;
-      border: none;
-      padding: 8px;
-      border-radius: 8px;
-      font-size: 16px;
-      width: 180px;
-      font-family: 'Inter', sans-serif;
-    }
-    .text-tool-input button {
-      background: #3b82f6;
-      border: none;
-      color: white;
-      padding: 6px 12px;
-      border-radius: 8px;
-      margin-left: 6px;
-      cursor: pointer;
-    }
+    button:active { transform: scale(0.97); }
   </style>
 </head>
 <body>
 
-<div class="presentation-container">
-  <!-- Google Slides iframe - replace with your published PPT link (Edit mode ? or presentation mode) -->
-  <div class="slides-iframe-wrapper">
-    <iframe id="pptFrame" src="https://docs.google.com/presentation/d/e/2PACX-1vQ6mTmq_Z1e9x_l7FI0FAklWbD03pViw1qW0cAYl-PblvY5VhN9tq3BwWYrLGtkpvstnN9Fuyf4Sf5H/embed?start=false&loop=false&delayms=3000" frameborder="0" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+<div class="app-container">
+  <!-- Tab navigation -->
+  <div class="tab-bar">
+    <button id="whiteboardTabBtn" class="tab-btn active"><i class="fas fa-chalkboard-user"></i> Whiteboard</button>
+    <button id="slidesTabBtn" class="tab-btn"><i class="fas fa-slideshare"></i> Google Slides</button>
   </div>
 
-  <!-- Drawing Canvas (markers, highlights, text over slides) -->
-  <canvas id="drawCanvas" class="draw-canvas"></canvas>
-
-  <!-- Floating Camera Widget (draggable) -->
-  <div id="cameraWidget" class="camera-widget" style="display: flex; flex-direction: column;">
-    <div class="camera-header" id="dragHandle">
-      <span><i class="fas fa-video"></i> Presenter Cam</span>
-      <div class="cam-controls">
-        <button id="toggleCamBtn" title="Start/Stop Camera"><i class="fas fa-power-off"></i></button>
+  <!-- Whiteboard Page (full canvas + tools) -->
+  <div id="whiteboardPage" class="page active-page">
+    <div class="whiteboard-container">
+      <canvas id="wbCanvas"></canvas>
+      <div class="wb-toolbar">
+        <div style="display: flex; gap: 6px; align-items: center; background:#0f172a; padding:0 12px; border-radius:40px;">
+          <input type="color" id="wbColorPicker" value="#3b82f6">
+          <span style="font-size:12px;">|</span>
+          <input type="range" id="wbBrushSize" min="2" max="40" value="4">
+          <span id="wbSizeVal" style="font-size:12px; width:30px;">4px</span>
+        </div>
+        <button id="wbPen" class="wb-tool-btn active"><i class="fas fa-pencil-alt"></i> Pen</button>
+        <button id="wbHighlighter" class="wb-tool-btn"><i class="fas fa-highlighter"></i> Highlighter</button>
+        <button id="wbText" class="wb-tool-btn"><i class="fas fa-font"></i> Text</button>
+        <button id="wbClear" class="wb-tool-btn"><i class="fas fa-trash-alt"></i> Clear</button>
+        <button id="wbFullscreen" class="wb-tool-btn"><i class="fas fa-expand"></i> Fullscreen</button>
       </div>
     </div>
-    <div class="video-preview" id="videoContainer">
-      <video id="localVideo" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"></video>
-    </div>
   </div>
 
-  <!-- Annotation & Recording Toolbar -->
-  <div class="annotation-toolbar">
-    <div class="color-picker-group">
-      <label style="font-size:12px;">🎨</label>
-      <input type="color" id="strokeColor" value="#f97316">
+  <!-- Slides Page: embed + link paste -->
+  <div id="slidesPage" class="page">
+    <div class="slides-wrapper">
+      <div class="link-controls">
+        <label><i class="fab fa-google"></i> Paste Google Slides link (presentation mode):</label>
+        <input type="text" id="slideLinkInput" placeholder="https://docs.google.com/presentation/d/e/.../embed or share link">
+        <button id="loadSlideBtn"><i class="fas fa-play"></i> Load Slides</button>
+        <span class="info-hint"><i class="fas fa-info-circle"></i> Use Publish to web → Embed, or direct presentation link</span>
+      </div>
+      <div class="iframe-container">
+        <iframe id="slidesIframe" src="about:blank" title="Google Slides" allowfullscreen></iframe>
+      </div>
     </div>
-    <div class="slider-container">
-      <i class="fas fa-pen-fancy"></i>
-      <input type="range" id="brushSize" min="2" max="30" value="4">
-      <span id="sizeValue" style="font-size:12px; width:28px;">4px</span>
-    </div>
-    <button id="penModeBtn" class="tool-btn active"><i class="fas fa-paintbrush"></i> Pen</button>
-    <button id="highlightModeBtn" class="tool-btn"><i class="fas fa-highlighter"></i> Highlighter</button>
-    <button id="textModeBtn" class="tool-btn"><i class="fas fa-font"></i> Text</button>
-    <button id="clearCanvasBtn" class="tool-btn"><i class="fas fa-eraser"></i> Clear</button>
-    <button id="recordScreenBtn" class="tool-btn"><i class="fas fa-desktop"></i> 🎙️ Rec Screen</button>
-    <span style="margin:0 4px; color:#475569;">|</span>
-    <button id="fullscreenBtn" class="tool-btn"><i class="fas fa-expand"></i> Fullscreen</button>
   </div>
+</div>
 
-  <!-- Recording status indicator -->
-  <div id="recStatus" class="rec-badge hidden">
-    <i class="fas fa-circle" style="color:#ff4d4d; font-size:12px;"></i> RECORDING (Screen+Mic)
+<!-- GLOBAL CAMERA (always on, records video continuously) -->
+<div id="globalCamera" class="global-camera">
+  <div class="cam-header" id="camDragHandle">
+    <span><i class="fas fa-camera"></i> Presenter Cam (always live)</span>
+    <span class="cam-badge" style="background:#10b981;">LIVE</span>
   </div>
+  <div class="cam-preview">
+    <video id="camVideo" autoplay muted playsinline></video>
+  </div>
+</div>
+
+<!-- Global recording status -->
+<div id="globalRecStatus" class="recording-global hidden">
+  <i class="fas fa-circle" style="color:#ff5e5e;"></i> SCREEN + MIC RECORDING ACTIVE
 </div>
 
 <script>
   (function() {
-    // ---------- DOM elements ----------
-    const canvas = document.getElementById('drawCanvas');
-    const ctx = canvas.getContext('2d');
-    const pptFrame = document.getElementById('pptFrame');
-
-    // annotation state
-    let drawing = false;
-    let mode = 'pen';     // 'pen', 'highlighter', 'text'
-    let currentColor = '#f97316';
-    let brushWidth = 4;
+    // ------------------------------
+    // 1. PERSISTENT CAMERA (continuous, always on)
+    // ------------------------------
+    let cameraStream = null;
+    const camVideo = document.getElementById('camVideo');
     
-    // for highlighter semi-transparent
-    let highlighterColor = 'rgba(255, 235, 90, 0.45)';
-    
-    function updateStyles() {
-      if (mode === 'highlighter') {
-        ctx.globalAlpha = 0.55;
-        ctx.strokeStyle = highlighterColor;
-        ctx.fillStyle = highlighterColor;
-      } else {
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = currentColor;
-        ctx.fillStyle = currentColor;
-      }
-      ctx.lineWidth = brushWidth;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-    }
-    
-    // resize canvas to cover full window
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      // restore saved drawing after resize? For simplicity we just clear? But better redraw from saved imageData
-      // we keep a backup drawing layer
-      if (window.savedCanvasData) {
-        const img = new Image();
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0);
-        };
-        img.src = window.savedCanvasData;
-      } else {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-      updateStyles();
-    }
-    
-    // store drawings on resize / before clear: but we'll keep a backup variable for drawings.
-    function storeCanvasData() {
+    async function initContinuousCamera() {
       try {
-        window.savedCanvasData = canvas.toDataURL();
-      } catch(e) {}
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(t => t.stop());
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        cameraStream = stream;
+        camVideo.srcObject = stream;
+      } catch (err) {
+        console.warn("Camera error:", err);
+        camVideo.poster = "";
+        const placeholder = document.createElement('div');
+        placeholder.innerText = "⚠️ Camera not available";
+        placeholder.style.color = "red";
+        document.querySelector('.cam-preview').appendChild(placeholder);
+      }
+    }
+    initContinuousCamera();
+
+    // Draggable camera widget
+    const camWidget = document.getElementById('globalCamera');
+    const dragHandle = document.getElementById('camDragHandle');
+    let offsetX = 0, offsetY = 0, isDraggingCam = false;
+    dragHandle.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.cam-badge')) return;
+      isDraggingCam = true;
+      offsetX = e.clientX - camWidget.offsetLeft;
+      offsetY = e.clientY - camWidget.offsetTop;
+      camWidget.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDraggingCam) return;
+      let left = e.clientX - offsetX;
+      let top = e.clientY - offsetY;
+      left = Math.min(Math.max(5, left), window.innerWidth - camWidget.offsetWidth - 5);
+      top = Math.min(Math.max(5, top), window.innerHeight - camWidget.offsetHeight - 5);
+      camWidget.style.left = left + 'px';
+      camWidget.style.right = 'auto';
+      camWidget.style.bottom = 'auto';
+      camWidget.style.top = top + 'px';
+    });
+    window.addEventListener('mouseup', () => { isDraggingCam = false; camWidget.style.cursor = ''; });
+
+    // ------------------------------
+    // 2. CONTINUOUS SCREEN + MIC RECORDING (auto starts, records everything)
+    // ------------------------------
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let combinedStream = null;
+    let recordingActive = false;
+    const recStatusDiv = document.getElementById('globalRecStatus');
+    
+    // Function to start continuous recording (screen + mic)
+    async function startContinuousRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        console.log("Already recording");
+        return;
+      }
+      try {
+        // Get display media (screen share) with audio
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        // Get microphone audio
+        const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Merge tracks: video from screen + audio from screen (system) + audio from mic
+        const videoTrack = displayStream.getVideoTracks()[0];
+        const audioTracks = [...displayStream.getAudioTracks(), ...micStream.getAudioTracks()];
+        combinedStream = new MediaStream([videoTrack, ...audioTracks]);
+        
+        mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+        recordedChunks = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) recordedChunks.push(event.data);
+        };
+        
+        // On stop we automatically save and restart recording for seamless continuity? 
+        // But requirement: "screen should be recorded continus" -> we will auto restart if stream ends.
+        mediaRecorder.onstop = async () => {
+          // save the recorded chunk
+          if (recordedChunks.length) {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `session_record_${new Date().toISOString().slice(0,19)}.webm`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }
+          // re-init recording if the user didn't manually stop? but we provide a stop button? 
+          // for continuous: we restart immediately as long as app is alive unless manually turned off.
+          if (window.keepRecordingAlive !== false) {
+            setTimeout(() => startContinuousRecording(), 500);
+          } else {
+            recStatusDiv.classList.add('hidden');
+          }
+        };
+        
+        mediaRecorder.start(2000); // collect every 2 sec chunks
+        recordingActive = true;
+        recStatusDiv.classList.remove('hidden');
+        
+        // if user ends screen share track, restart recording automatically.
+        videoTrack.onended = () => {
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+          }
+        };
+      } catch (err) {
+        console.error("Recording error:", err);
+        alert("Could not start screen recording. Please allow permissions. " + err.message);
+        recStatusDiv.classList.add('hidden');
+      }
     }
     
-    // drawing events
-    function startDrawing(e) {
-      if (mode === 'text') return;
-      drawing = true;
-      const pos = getCanvasCoords(e);
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
-      ctx.lineTo(pos.x + 0.5, pos.y + 0.5);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
+    // stop recording and save final file
+    function stopContinuousRecording() {
+      window.keepRecordingAlive = false;
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      } else {
+        recStatusDiv.classList.add('hidden');
+      }
+      if (combinedStream) combinedStream.getTracks().forEach(t => t.stop());
     }
     
-    function draw(e) {
-      if (!drawing) return;
-      if (mode === 'text') return;
-      const pos = getCanvasCoords(e);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
+    // Global variable to allow user to stop? But requirement: continous record. However we can provide a hidden admin stop? 
+    // Better to auto start on page load and always run. Also we add a button to stop/start? requirement says "screen should be recorded continus"
+    // meaning automatically start and keep recording all screen activity. We'll auto start on load, and if user closes tab it stops.
+    window.keepRecordingAlive = true;
+    startContinuousRecording().catch(e => console.warn(e));
+    
+    // optional (in case user wants to stop: not required but we can attach to console, but no UI to avoid confusion)
+    // provide a way to restart recording if user accidentally stops, but it's automatic
+    
+    // ------------------------------
+    // 3. WHITEBOARD MODULE (full canvas, drawing, highlight, text)
+    // ------------------------------
+    const wbCanvas = document.getElementById('wbCanvas');
+    const wbCtx = wbCanvas.getContext('2d');
+    let wbDrawing = false;
+    let wbMode = 'pen'; // pen, highlighter, text
+    let wbColor = '#3b82f6';
+    let wbBrushSize = 4;
+    let wbHighlightColor = 'rgba(255, 235, 80, 0.5)';
+    
+    function resizeWhiteboard() {
+      const container = document.querySelector('.whiteboard-container');
+      wbCanvas.width = container.clientWidth;
+      wbCanvas.height = container.clientHeight;
+      // restore saved content if any
+      if (window.whiteboardData) {
+        const img = new Image();
+        img.onload = () => wbCtx.drawImage(img, 0, 0);
+        img.src = window.whiteboardData;
+      } else {
+        wbCtx.fillStyle = '#ffffff';
+        wbCtx.fillRect(0, 0, wbCanvas.width, wbCanvas.height);
+      }
+      updateWBStyle();
     }
     
-    function stopDrawing() {
-      drawing = false;
-      ctx.beginPath();
-      storeCanvasData();
+    function updateWBStyle() {
+      if (wbMode === 'highlighter') {
+        wbCtx.globalAlpha = 0.55;
+        wbCtx.strokeStyle = wbHighlightColor;
+        wbCtx.fillStyle = wbHighlightColor;
+      } else {
+        wbCtx.globalAlpha = 1;
+        wbCtx.strokeStyle = wbColor;
+        wbCtx.fillStyle = wbColor;
+      }
+      wbCtx.lineWidth = wbBrushSize;
+      wbCtx.lineCap = 'round';
+      wbCtx.lineJoin = 'round';
     }
     
-    function getCanvasCoords(e) {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
+    function getWBCoords(e) {
+      const rect = wbCanvas.getBoundingClientRect();
+      const scaleX = wbCanvas.width / rect.width;
+      const scaleY = wbCanvas.height / rect.height;
       let clientX, clientY;
       if (e.touches) {
         clientX = e.touches[0].clientX;
@@ -391,275 +511,153 @@
       }
       let x = (clientX - rect.left) * scaleX;
       let y = (clientY - rect.top) * scaleY;
-      x = Math.min(Math.max(0, x), canvas.width);
-      y = Math.min(Math.max(0, y), canvas.height);
+      x = Math.min(Math.max(0, x), wbCanvas.width);
+      y = Math.min(Math.max(0, y), wbCanvas.height);
       return { x, y };
     }
     
-    // text tool: show input at click position
-    let textInputDiv = null;
-    function removeTextInput() {
-      if (textInputDiv) textInputDiv.remove();
-      textInputDiv = null;
+    function startWB(e) {
+      if (wbMode === 'text') return;
+      wbDrawing = true;
+      const pos = getWBCoords(e);
+      wbCtx.beginPath();
+      wbCtx.moveTo(pos.x, pos.y);
+      wbCtx.lineTo(pos.x+0.5, pos.y+0.5);
+      wbCtx.stroke();
+      wbCtx.beginPath();
+      wbCtx.moveTo(pos.x, pos.y);
     }
     
-    function showTextInputAt(x, y) {
-      removeTextInput();
-      const div = document.createElement('div');
-      div.className = 'text-tool-input';
-      div.style.left = x + 'px';
-      div.style.top = y + 'px';
-      const input = document.createElement('input');
-      input.placeholder = 'Type your text...';
-      const okBtn = document.createElement('button');
-      okBtn.textContent = 'Add';
-      okBtn.onclick = () => {
-        const text = input.value.trim();
-        if (text) {
-          drawTextOnCanvas(text, x, y);
-        }
-        removeTextInput();
-      };
-      div.appendChild(input);
-      div.appendChild(okBtn);
-      document.body.appendChild(div);
-      textInputDiv = div;
-      input.focus();
-      input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') okBtn.click();
-      });
+    function drawWB(e) {
+      if (!wbDrawing || wbMode === 'text') return;
+      const pos = getWBCoords(e);
+      wbCtx.lineTo(pos.x, pos.y);
+      wbCtx.stroke();
+      wbCtx.beginPath();
+      wbCtx.moveTo(pos.x, pos.y);
     }
     
-    function drawTextOnCanvas(text, clientX, clientY) {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      let canvasX = (clientX - rect.left) * scaleX;
-      let canvasY = (clientY - rect.top) * scaleY;
-      canvasX = Math.min(Math.max(0, canvasX), canvas.width);
-      canvasY = Math.min(Math.max(0, canvasY), canvas.height);
-      ctx.font = `${brushWidth * 4}px "Inter", system-ui`;
-      ctx.fillStyle = mode === 'highlighter' ? highlighterColor : currentColor;
-      ctx.shadowBlur = 0;
-      ctx.fillText(text, canvasX, canvasY);
-      storeCanvasData();
+    function stopWB() {
+      wbDrawing = false;
+      wbCtx.beginPath();
+      saveWhiteboardState();
     }
     
-    function handleCanvasMouseDown(e) {
-      if (mode === 'text') {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.clientX;
-        const clientY = e.clientY;
-        showTextInputAt(clientX, clientY);
-        return;
+    function saveWhiteboardState() {
+      window.whiteboardData = wbCanvas.toDataURL();
+    }
+    
+    function addWhiteboardText(e) {
+      if (wbMode !== 'text') return;
+      const pos = getWBCoords(e);
+      const text = prompt("Enter text for annotation:", "Note");
+      if (text && text.trim()) {
+        wbCtx.font = `${wbBrushSize * 4}px "Inter", sans-serif`;
+        wbCtx.fillStyle = wbMode === 'highlighter' ? wbHighlightColor : wbColor;
+        wbCtx.fillText(text, pos.x, pos.y);
+        saveWhiteboardState();
       }
-      startDrawing(e);
     }
     
-    // attach canvas events
-    canvas.addEventListener('mousedown', handleCanvasMouseDown);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', stopDrawing);
-    // touch events
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleCanvasMouseDown(e); });
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
-    canvas.addEventListener('touchend', stopDrawing);
+    wbCanvas.addEventListener('mousedown', (e) => { if (wbMode === 'text') addWhiteboardText(e); else startWB(e); });
+    wbCanvas.addEventListener('mousemove', drawWB);
+    wbCanvas.addEventListener('mouseup', stopWB);
+    wbCanvas.addEventListener('mouseleave', stopWB);
+    wbCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); if (wbMode === 'text') addWhiteboardText(e); else startWB(e); });
+    wbCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); drawWB(e); });
+    wbCanvas.addEventListener('touchend', stopWB);
     
-    // UI buttons
-    const penBtn = document.getElementById('penModeBtn');
-    const highlighterBtn = document.getElementById('highlightModeBtn');
-    const textBtn = document.getElementById('textModeBtn');
-    const clearBtn = document.getElementById('clearCanvasBtn');
-    const colorPicker = document.getElementById('strokeColor');
-    const brushSlider = document.getElementById('brushSize');
-    const sizeSpan = document.getElementById('sizeValue');
+    // whiteboard UI
+    const wbPen = document.getElementById('wbPen');
+    const wbHigh = document.getElementById('wbHighlighter');
+    const wbTextBtn = document.getElementById('wbText');
+    const wbClear = document.getElementById('wbClear');
+    const wbColorPick = document.getElementById('wbColorPicker');
+    const wbBrushSlider = document.getElementById('wbBrushSize');
+    const wbSizeSpan = document.getElementById('wbSizeVal');
+    const wbFull = document.getElementById('wbFullscreen');
     
-    penBtn.addEventListener('click', () => {
-      mode = 'pen';
-      updateActiveButton(penBtn);
-      updateStyles();
-    });
-    highlighterBtn.addEventListener('click', () => {
-      mode = 'highlighter';
-      updateActiveButton(highlighterBtn);
-      updateStyles();
-    });
-    textBtn.addEventListener('click', () => {
-      mode = 'text';
-      updateActiveButton(textBtn);
-    });
-    function updateActiveButton(active) {
-      [penBtn, highlighterBtn, textBtn].forEach(btn => btn.classList.remove('active'));
+    wbPen.addEventListener('click', () => { wbMode = 'pen'; updateActiveWBTool(wbPen); updateWBStyle(); });
+    wbHigh.addEventListener('click', () => { wbMode = 'highlighter'; updateActiveWBTool(wbHigh); updateWBStyle(); });
+    wbTextBtn.addEventListener('click', () => { wbMode = 'text'; updateActiveWBTool(wbTextBtn); });
+    wbClear.addEventListener('click', () => { wbCtx.fillStyle = '#ffffff'; wbCtx.fillRect(0, 0, wbCanvas.width, wbCanvas.height); saveWhiteboardState(); });
+    wbColorPick.addEventListener('input', (e) => { wbColor = e.target.value; wbHighlightColor = wbColor + 'aa'; updateWBStyle(); });
+    wbBrushSlider.addEventListener('input', (e) => { wbBrushSize = parseInt(e.target.value); wbSizeSpan.innerText = wbBrushSize + 'px'; updateWBStyle(); });
+    wbFull.addEventListener('click', () => { document.documentElement.requestFullscreen(); });
+    
+    function updateActiveWBTool(active) {
+      [wbPen, wbHigh, wbTextBtn].forEach(btn => btn.classList.remove('active'));
       active.classList.add('active');
     }
-    colorPicker.addEventListener('input', (e) => {
-      currentColor = e.target.value;
-      highlighterColor = currentColor + 'aa'; // semi-transparent highlight variation
-      updateStyles();
-    });
-    brushSlider.addEventListener('input', (e) => {
-      brushWidth = parseInt(e.target.value);
-      sizeSpan.innerText = brushWidth + 'px';
-      updateStyles();
-    });
-    clearBtn.addEventListener('click', () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      storeCanvasData();
-    });
     
-    // FULLSCREEN for entire container
-    const fullBtn = document.getElementById('fullscreenBtn');
-    fullBtn.addEventListener('click', () => {
-      const elem = document.documentElement;
-      if (!document.fullscreenElement) {
-        elem.requestFullscreen().catch(err => console.warn(err));
-      } else {
-        document.exitFullscreen();
-      }
-    });
+    window.addEventListener('resize', () => resizeWhiteboard());
+    resizeWhiteboard();
     
-    // ----- CAMERA MODULE -----
-    let cameraStream = null;
-    const localVideo = document.getElementById('localVideo');
-    const toggleCamBtn = document.getElementById('toggleCamBtn');
-    let cameraActive = false;
+    // ------------------------------
+    // 4. SLIDES PAGE: load google slides from any embed link
+    // ------------------------------
+    const slidesIframe = document.getElementById('slidesIframe');
+    const linkInput = document.getElementById('slideLinkInput');
+    const loadBtn = document.getElementById('loadSlideBtn');
     
-    async function startCamera() {
-      if (cameraStream) {
-        stopCamera();
+    function extractGoogleEmbedUrl(rawLink) {
+      let url = rawLink.trim();
+      // if it's a standard presentation link: https://docs.google.com/presentation/d/XXXX/edit?usp=sharing
+      // convert to embed format
+      const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match) {
+        const id = match[1];
+        return `https://docs.google.com/presentation/d/${id}/embed?start=false&loop=false&delayms=3000`;
       }
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        cameraStream = stream;
-        localVideo.srcObject = stream;
-        cameraActive = true;
-        toggleCamBtn.innerHTML = '<i class="fas fa-stop"></i>';
-      } catch(err) {
-        alert("Camera error: " + err.message);
-      }
+      // if already embed
+      if (url.includes('/embed')) return url;
+      return url;
     }
     
-    function stopCamera() {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-        localVideo.srcObject = null;
-        cameraActive = false;
-        toggleCamBtn.innerHTML = '<i class="fas fa-video"></i>';
-      }
-    }
-    
-    toggleCamBtn.addEventListener('click', () => {
-      if (cameraActive) stopCamera();
-      else startCamera();
-    });
-    
-    // Draggable camera widget
-    const widget = document.getElementById('cameraWidget');
-    const dragHandle = document.getElementById('dragHandle');
-    let offsetX, offsetY, isDragging = false;
-    dragHandle.addEventListener('mousedown', (e) => {
-      if (e.target.closest('.cam-controls')) return;
-      isDragging = true;
-      offsetX = e.clientX - widget.offsetLeft;
-      offsetY = e.clientY - widget.offsetTop;
-      widget.style.cursor = 'grabbing';
-      e.preventDefault();
-    });
-    window.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      let left = e.clientX - offsetX;
-      let top = e.clientY - offsetY;
-      left = Math.min(Math.max(10, left), window.innerWidth - widget.offsetWidth - 10);
-      top = Math.min(Math.max(10, top), window.innerHeight - widget.offsetHeight - 10);
-      widget.style.left = left + 'px';
-      widget.style.right = 'auto';
-      widget.style.bottom = 'auto';
-      widget.style.top = top + 'px';
-    });
-    window.addEventListener('mouseup', () => { isDragging = false; widget.style.cursor = ''; });
-    
-    // ----- SCREEN RECORDING with microphone -----
-    let mediaRecorder = null;
-    let recordedChunks = [];
-    let screenStream = null;
-    const recordBtn = document.getElementById('recordScreenBtn');
-    const recStatusDiv = document.getElementById('recStatus');
-    
-    async function startScreenRecording() {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        stopRecording();
+    loadBtn.addEventListener('click', () => {
+      let userLink = linkInput.value;
+      if (!userLink) {
+        alert("Please paste a Google Slides share link or embed link.");
         return;
       }
-      try {
-        // get display media + audio from mic
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-        const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // combine tracks
-        const combinedTracks = [...displayStream.getVideoTracks(), ...displayStream.getAudioTracks(), ...micStream.getAudioTracks()];
-        screenStream = new MediaStream(combinedTracks);
-        mediaRecorder = new MediaRecorder(screenStream, { mimeType: 'video/webm' });
-        recordedChunks = [];
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) recordedChunks.push(event.data);
-        };
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(recordedChunks, { type: 'video/webm' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `presentation_recording_${new Date().toISOString().slice(0,19)}.webm`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          if (screenStream) screenStream.getTracks().forEach(t => t.stop());
-          screenStream = null;
-          recStatusDiv.classList.add('hidden');
-          recordBtn.innerHTML = '<i class="fas fa-desktop"></i> 🎙️ Rec Screen';
-          recordBtn.classList.remove('danger');
-        };
-        mediaRecorder.start(1000);
-        recStatusDiv.classList.remove('hidden');
-        recordBtn.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
-        recordBtn.classList.add('danger');
-        // auto stop when screen share track ends
-        displayStream.getVideoTracks()[0].onended = () => {
-          if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording();
-        };
-      } catch(err) {
-        alert("Recording error: " + err.message);
-      }
-    }
-    
-    function stopRecording() {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-      }
-    }
-    
-    recordBtn.addEventListener('click', () => {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        stopRecording();
-      } else {
-        startScreenRecording();
-      }
+      const embedSrc = extractGoogleEmbedUrl(userLink);
+      slidesIframe.src = embedSrc;
     });
     
-    // resize observer & initial canvas setup
+    // prefill demo link
+    linkInput.value = "https://docs.google.com/presentation/d/1VY6gOqF4nZ0B-KaYRqNoKAzN_KlQrXzv82yNzNuxz1A/edit?usp=sharing";
+    
+    // ------------------------------
+    // 5. TAB SWITCHING (preserve whiteboard state)
+    // ------------------------------
+    const whiteboardPage = document.getElementById('whiteboardPage');
+    const slidesPage = document.getElementById('slidesPage');
+    const whiteboardTab = document.getElementById('whiteboardTabBtn');
+    const slidesTab = document.getElementById('slidesTabBtn');
+    
+    function switchToWhiteboard() {
+      whiteboardPage.classList.add('active-page');
+      slidesPage.classList.remove('active-page');
+      whiteboardTab.classList.add('active');
+      slidesTab.classList.remove('active');
+      resizeWhiteboard(); // re-trigger canvas size after layout
+    }
+    function switchToSlides() {
+      slidesPage.classList.add('active-page');
+      whiteboardPage.classList.remove('active-page');
+      slidesTab.classList.add('active');
+      whiteboardTab.classList.remove('active');
+    }
+    whiteboardTab.addEventListener('click', switchToWhiteboard);
+    slidesTab.addEventListener('click', switchToSlides);
+    
+    // ensure on orientation change whiteboard adjusts
     window.addEventListener('resize', () => {
-      storeCanvasData();
-      resizeCanvas();
+      if (whiteboardPage.classList.contains('active-page')) resizeWhiteboard();
     });
-    resizeCanvas();
-    // initial load backup
-    window.savedCanvasData = null;
     
-    // allow change of google slides iframe? but we keep placeholder editable (user can modify src)
-    // optional: you can edit the iframe source by adding an input, but main requirement is done.
-    // for better UX, we also show instructions.
-    console.log("Ready: Use Pen/Highlighter/Text, Camera, Screen+Mic Recording, Drag cam window, fullscreen mode.");
+    // little extra: for user to know recording continues
+    console.log("✅ System ready: Camera always on, Screen + Mic recording continuous. Whiteboard & Slides ready.");
   })();
 </script>
 </body>
