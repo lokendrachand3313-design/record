@@ -13,7 +13,6 @@
       box-sizing: border-box;
     }
 
-    /* FULL BORDERLESS SCREEN - ONLY content visible */
     body {
       font-family: 'Inter', sans-serif;
       background: #0a0f1c;
@@ -25,7 +24,6 @@
       left: 0;
     }
 
-    /* main app with LARGER border (edge of website) */
     .app-container {
       display: flex;
       flex-direction: column;
@@ -36,7 +34,6 @@
       box-shadow: inset 0 0 0 6px rgba(59, 130, 246, 0.8), inset 0 0 0 12px rgba(0, 0, 0, 0.3);
     }
 
-    /* TAB BAR */
     .tab-bar {
       display: flex;
       background: #111827;
@@ -67,7 +64,6 @@
       background: #0f172a;
     }
 
-    /* PAGE CONTAINERS */
     .page {
       flex: 1;
       position: relative;
@@ -78,7 +74,7 @@
       display: block;
     }
 
-    /* ----- WHITEBOARD PAGE ----- */
+    /* WHITEBOARD */
     .whiteboard-container {
       position: relative;
       width: 100%;
@@ -93,9 +89,10 @@
       width: 100%;
       height: 100%;
       background: white;
+      cursor: crosshair;
     }
 
-    /* ----- SLIDES PAGE ----- */
+    /* SLIDES */
     .slides-wrapper {
       display: flex;
       flex-direction: column;
@@ -110,7 +107,6 @@
       align-items: center;
       border-bottom: 1px solid #1e293b;
       flex-wrap: wrap;
-      transition: 0.3s;
     }
     .link-controls.hide-controls { display: none; }
     #slideLinkInput {
@@ -143,7 +139,7 @@
       background: white;
     }
 
-    /* GLOBAL CAMERA - STICKY bottom-right with border & on/off button */
+    /* GLOBAL CAMERA - draggable */
     .global-camera {
       position: fixed;
       bottom: 28px;
@@ -156,7 +152,6 @@
       z-index: 1000;
       box-shadow: 0 20px 35px -10px black;
       cursor: move;
-      transition: 0.1s;
     }
     .cam-header {
       display: flex;
@@ -179,13 +174,6 @@
       position: relative;
     }
     video { width: 100%; height: 100%; object-fit: cover; }
-    .cam-badge {
-      background: #10b981;
-      border-radius: 20px;
-      padding: 2px 8px;
-      font-size: 10px;
-    }
-    .cam-badge.off { background: #ef4444; }
     .cam-toggle-btn {
       background: #1e293b;
       border: none;
@@ -197,11 +185,10 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      transition: 0.2s;
     }
     .cam-toggle-btn:hover { background: #3b82f6; }
 
-    /* TV-CHANNEL STYLE LOGO (right top) - UPDATED to Biology Sir */
+    /* TV CHANNEL LOGO */
     .channel-logo {
       position: fixed;
       top: 20px;
@@ -220,7 +207,6 @@
       gap: 10px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       pointer-events: none;
-      font-family: 'Inter', sans-serif;
     }
     .channel-logo i { font-size: 1.4rem; color: #facc15; }
     .channel-logo span {
@@ -230,7 +216,7 @@
       color: transparent;
     }
 
-    /* CONSOLIDATED TOOLBAR - all icons only, no text, separate in one line */
+    /* UNIFIED TOOLBAR */
     .unified-toolbar {
       position: fixed;
       bottom: 28px;
@@ -245,7 +231,6 @@
       z-index: 1100;
       border: 1px solid #3b82f6;
       box-shadow: 0 8px 24px black;
-      pointer-events: auto;
     }
     .tool-icon {
       background: #1e293b;
@@ -270,7 +255,6 @@
       background: #475569;
       margin: 0 4px;
     }
-    /* color picker & brush size as icons */
     .color-group {
       display: flex;
       align-items: center;
@@ -285,7 +269,6 @@
       border: 2px solid white;
       border-radius: 50%;
       cursor: pointer;
-      background: #3b82f6;
     }
     .brush-slider {
       width: 80px;
@@ -301,7 +284,6 @@
       color: white;
     }
 
-    /* recording indicator */
     .recording-indicator {
       position: fixed;
       top: 20px;
@@ -320,23 +302,24 @@
     }
     .hidden { display: none; }
 
-    /* Crop overlay */
+    /* Crop overlay styles */
     .crop-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.75);
+      background: rgba(0,0,0,0.7);
       z-index: 2000;
       cursor: crosshair;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(3px);
     }
     .selection-box {
       position: absolute;
-      border: 3px solid #3b82f6;
+      border: 3px solid #facc15;
       background: rgba(59,130,246,0.2);
       box-shadow: 0 0 0 9999px rgba(0,0,0,0.6);
+      cursor: move;
     }
     .crop-controls-bar {
       position: fixed;
@@ -359,8 +342,10 @@
       font-weight: bold;
       cursor: pointer;
     }
-    .crop-confirm { background: #3b82f6; }
-    .crop-cancel { background: #475569; }
+    .crop-confirm { background: #10b981; }
+    .crop-cancel { background: #ef4444; }
+    .crop-confirm:hover { background: #059669; }
+    .crop-cancel:hover { background: #dc2626; }
   </style>
 </head>
 <body>
@@ -371,14 +356,12 @@
     <button id="slidesTabBtn" class="tab-btn"><i class="fas fa-slideshare"></i> Google Slides</button>
   </div>
 
-  <!-- Whiteboard Page -->
   <div id="whiteboardPage" class="page active-page">
     <div class="whiteboard-container">
       <canvas id="wbCanvas"></canvas>
     </div>
   </div>
 
-  <!-- Slides Page -->
   <div id="slidesPage" class="page">
     <div class="slides-wrapper">
       <div class="link-controls" id="linkControls">
@@ -388,20 +371,19 @@
         <button id="resetControlsBtn"><i class="fas fa-undo-alt"></i> Show Controls</button>
       </div>
       <div class="iframe-container">
-        <iframe id="slidesIframe" src="about:blank" allowfullscreen></iframe>
+        <iframe id="slidesIframe" src="about:blank" allow="fullscreen"></iframe>
       </div>
     </div>
   </div>
 </div>
 
-<!-- TV CHANNEL LOGO - UPDATED: Biology Sir -->
 <div class="channel-logo">
   <i class="fas fa-microscope"></i>
   <span>Biology Sir</span>
   <i class="fas fa-dna"></i>
 </div>
 
-<!-- GLOBAL CAMERA with ON/OFF button -->
+<!-- Camera widget -->
 <div id="globalCamera" class="global-camera">
   <div class="cam-header" id="camDragHandle">
     <span><i class="fas fa-camera"></i> Presenter Cam</span>
@@ -412,32 +394,30 @@
   </div>
 </div>
 
-<!-- UNIFIED TOOLBAR (icons only, no text, separate line) -->
+<!-- Toolbar -->
 <div class="unified-toolbar">
   <div class="color-group">
-    <input type="color" id="wbColorPickerIcon" value="#3b82f6" style="width:32px; height:32px; border-radius:50%; border:2px solid white; background:#3b82f6; cursor:pointer;">
+    <input type="color" id="wbColorPickerIcon" value="#3b82f6">
     <input type="range" id="wbBrushSliderIcon" class="brush-slider" min="2" max="40" value="4">
-    <span id="brushSizeVal" style="font-size:11px;">4px</span>
+    <span id="brushSizeVal">4px</span>
   </div>
   <button id="penIconBtn" class="tool-icon active"><i class="fas fa-paintbrush"></i></button>
   <button id="highlighterIconBtn" class="tool-icon"><i class="fas fa-highlighter"></i></button>
   <button id="textIconBtn" class="tool-icon"><i class="fas fa-font"></i></button>
   <button id="clearIconBtn" class="tool-icon"><i class="fas fa-trash-alt"></i></button>
   <div class="divider"></div>
-  <button id="cropRecordIconBtn" class="tool-icon"><i class="fas fa-crop-alt"></i> <i class="fas fa-record-vinyl"></i></button>
+  <button id="cropRecordIconBtn" class="tool-icon"><i class="fas fa-crop-alt"></i> <i class="fas fa-video"></i></button>
   <button id="stopRecordIconBtn" class="tool-icon danger"><i class="fas fa-stop"></i></button>
   <button id="fullscreenIconBtn" class="tool-icon"><i class="fas fa-expand"></i></button>
 </div>
 
 <div id="recIndicator" class="recording-indicator hidden">
-  <i class="fas fa-circle" style="color:#ff5e5e;"></i> RECORDING (cropped area + mic)
+  <i class="fas fa-circle" style="color:#ff5e5e;"></i> 🔴 RECORDING (Selected Area + Microphone)
 </div>
 
 <script>
   (function() {
-    // ------------------------------
-    // 1. CAMERA with ON/OFF BUTTON
-    // ------------------------------
+    // ======================= CAMERA MODULE =======================
     let cameraStream = null;
     let cameraActive = true;
     const camVideo = document.getElementById('camVideo');
@@ -452,7 +432,10 @@
         cameraActive = true;
         camOnOffBtn.innerHTML = '<i class="fas fa-power-off"></i> ON';
         camOnOffBtn.style.background = '#1e293b';
-      } catch(e) { console.warn(e); }
+      } catch(e) { 
+        console.warn(e);
+        alert("Camera access denied or unavailable");
+      }
     }
     
     function stopCameraTracks() {
@@ -467,14 +450,11 @@
     }
     
     function toggleCamera() {
-      if (cameraActive) {
-        stopCameraTracks();
-      } else {
-        startCamera();
-      }
+      if (cameraActive) stopCameraTracks();
+      else startCamera();
     }
     camOnOffBtn.addEventListener('click', toggleCamera);
-    startCamera(); // auto start
+    startCamera();
     
     // Draggable camera
     const camWidget = document.getElementById('globalCamera');
@@ -483,30 +463,29 @@
     dragHandle.addEventListener('mousedown', (e) => {
       if(e.target.closest('.cam-toggle-btn')) return;
       isDrag=true;
-      offX=e.clientX-camWidget.offsetLeft;
-      offY=e.clientY-camWidget.offsetTop;
+      offX = e.clientX - camWidget.offsetLeft;
+      offY = e.clientY - camWidget.offsetTop;
       camWidget.style.cursor='grabbing';
       e.preventDefault();
     });
     window.addEventListener('mousemove', (e) => {
       if(!isDrag) return;
-      let left=e.clientX-offX, top=e.clientY-offY;
-      left=Math.min(Math.max(8,left), window.innerWidth-camWidget.offsetWidth-8);
-      top=Math.min(Math.max(8,top), window.innerHeight-camWidget.offsetHeight-8);
-      camWidget.style.left=left+'px';
-      camWidget.style.right='auto';
-      camWidget.style.bottom='auto';
-      camWidget.style.top=top+'px';
+      let left = e.clientX - offX;
+      let top = e.clientY - offY;
+      left = Math.min(Math.max(8, left), window.innerWidth - camWidget.offsetWidth - 8);
+      top = Math.min(Math.max(8, top), window.innerHeight - camWidget.offsetHeight - 8);
+      camWidget.style.left = left + 'px';
+      camWidget.style.right = 'auto';
+      camWidget.style.bottom = 'auto';
+      camWidget.style.top = top + 'px';
     });
     window.addEventListener('mouseup', () => { isDrag=false; camWidget.style.cursor=''; });
     
-    // ------------------------------
-    // 2. WHITEBOARD MODULE
-    // ------------------------------
+    // ======================= WHITEBOARD =======================
     const wbCanvas = document.getElementById('wbCanvas');
     const wbCtx = wbCanvas.getContext('2d');
-    let wbDrawing=false, wbMode='pen', wbColor='#3b82f6', wbBrushSize=4;
-    let wbHighlightColor='rgba(255,235,80,0.5)';
+    let wbDrawing = false, wbMode = 'pen', wbColor = '#3b82f6', wbBrushSize = 4;
+    let wbHighlightColor = 'rgba(255,235,80,0.5)';
     
     function resizeWhiteboard() {
       const container = document.querySelector('.whiteboard-container');
@@ -522,178 +501,277 @@
       }
       updateStyle();
     }
+    
     function updateStyle() {
-      if(wbMode==='highlighter') {
-        wbCtx.globalAlpha=0.55;
-        wbCtx.strokeStyle=wbHighlightColor;
-        wbCtx.fillStyle=wbHighlightColor;
+      if(wbMode === 'highlighter') {
+        wbCtx.globalAlpha = 0.55;
+        wbCtx.strokeStyle = wbHighlightColor;
+        wbCtx.fillStyle = wbHighlightColor;
       } else {
-        wbCtx.globalAlpha=1;
-        wbCtx.strokeStyle=wbColor;
-        wbCtx.fillStyle=wbColor;
+        wbCtx.globalAlpha = 1;
+        wbCtx.strokeStyle = wbColor;
+        wbCtx.fillStyle = wbColor;
       }
-      wbCtx.lineWidth=wbBrushSize;
-      wbCtx.lineCap='round';
+      wbCtx.lineWidth = wbBrushSize;
+      wbCtx.lineCap = 'round';
     }
+    
     function getCoords(e) {
-      const rect=wbCanvas.getBoundingClientRect();
-      const sx=wbCanvas.width/rect.width, sy=wbCanvas.height/rect.height;
-      let cx,cy;
-      if(e.touches){ cx=e.touches[0].clientX; cy=e.touches[0].clientY; e.preventDefault(); }
-      else { cx=e.clientX; cy=e.clientY; }
-      let x=(cx-rect.left)*sx, y=(cy-rect.top)*sy;
-      return {x:Math.min(Math.max(0,x),wbCanvas.width), y:Math.min(Math.max(0,y),wbCanvas.height)};
+      const rect = wbCanvas.getBoundingClientRect();
+      const sx = wbCanvas.width / rect.width, sy = wbCanvas.height / rect.height;
+      let cx, cy;
+      if(e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; e.preventDefault(); }
+      else { cx = e.clientX; cy = e.clientY; }
+      let x = (cx - rect.left) * sx;
+      let y = (cy - rect.top) * sy;
+      return { x: Math.min(Math.max(0, x), wbCanvas.width), y: Math.min(Math.max(0, y), wbCanvas.height) };
     }
-    function startDraw(e) { if(wbMode==='text') return; wbDrawing=true; const p=getCoords(e); wbCtx.beginPath(); wbCtx.moveTo(p.x,p.y); wbCtx.lineTo(p.x+0.5,p.y+0.5); wbCtx.stroke(); wbCtx.beginPath(); wbCtx.moveTo(p.x,p.y); }
-    function draw(e) { if(!wbDrawing||wbMode==='text') return; const p=getCoords(e); wbCtx.lineTo(p.x,p.y); wbCtx.stroke(); wbCtx.beginPath(); wbCtx.moveTo(p.x,p.y); }
-    function stopDraw() { wbDrawing=false; wbCtx.beginPath(); saveState(); }
-    function saveState() { window.whiteboardData=wbCanvas.toDataURL(); }
-    function addText(e) { if(wbMode!=='text') return; const pos=getCoords(e); const txt=prompt("Enter text:"); if(txt?.trim()){ wbCtx.font=`${wbBrushSize*4}px "Inter"`; wbCtx.fillStyle=wbMode==='highlighter'?wbHighlightColor:wbColor; wbCtx.fillText(txt,pos.x,pos.y); saveState(); } }
-    wbCanvas.addEventListener('mousedown',(e)=>{if(wbMode==='text')addText(e); else startDraw(e);});
-    wbCanvas.addEventListener('mousemove',draw);
-    wbCanvas.addEventListener('mouseup',stopDraw);
-    wbCanvas.addEventListener('mouseleave',stopDraw);
-    wbCanvas.addEventListener('touchstart',(e)=>{e.preventDefault(); if(wbMode==='text')addText(e); else startDraw(e);});
-    wbCanvas.addEventListener('touchmove',(e)=>{e.preventDefault(); draw(e);});
-    wbCanvas.addEventListener('touchend',stopDraw);
     
-    // Toolbar icons
-    const penIcon=document.getElementById('penIconBtn');
-    const highIcon=document.getElementById('highlighterIconBtn');
-    const textIcon=document.getElementById('textIconBtn');
-    const clearIcon=document.getElementById('clearIconBtn');
-    const colorPick=document.getElementById('wbColorPickerIcon');
-    const brushSlider=document.getElementById('wbBrushSliderIcon');
-    const brushVal=document.getElementById('brushSizeVal');
-    const fullIcon=document.getElementById('fullscreenIconBtn');
+    function startDraw(e) { if(wbMode === 'text') return; wbDrawing = true; const p = getCoords(e); wbCtx.beginPath(); wbCtx.moveTo(p.x, p.y); wbCtx.lineTo(p.x+0.5, p.y+0.5); wbCtx.stroke(); wbCtx.beginPath(); wbCtx.moveTo(p.x, p.y); }
+    function draw(e) { if(!wbDrawing || wbMode === 'text') return; const p = getCoords(e); wbCtx.lineTo(p.x, p.y); wbCtx.stroke(); wbCtx.beginPath(); wbCtx.moveTo(p.x, p.y); }
+    function stopDraw() { wbDrawing = false; wbCtx.beginPath(); saveState(); }
+    function saveState() { window.whiteboardData = wbCanvas.toDataURL(); }
+    function addText(e) { if(wbMode !== 'text') return; const pos = getCoords(e); const txt = prompt("Enter text:"); if(txt?.trim()){ wbCtx.font = `${wbBrushSize * 4}px "Inter"`; wbCtx.fillStyle = wbMode==='highlighter'?wbHighlightColor:wbColor; wbCtx.fillText(txt, pos.x, pos.y); saveState(); } }
     
-    penIcon.onclick=()=>{ wbMode='pen'; [penIcon,highIcon,textIcon].forEach(b=>b.classList.remove('active')); penIcon.classList.add('active'); updateStyle(); };
-    highIcon.onclick=()=>{ wbMode='highlighter'; [penIcon,highIcon,textIcon].forEach(b=>b.classList.remove('active')); highIcon.classList.add('active'); updateStyle(); };
-    textIcon.onclick=()=>{ wbMode='text'; [penIcon,highIcon,textIcon].forEach(b=>b.classList.remove('active')); textIcon.classList.add('active'); };
-    clearIcon.onclick=()=>{ wbCtx.fillStyle='#ffffff'; wbCtx.fillRect(0,0,wbCanvas.width,wbCanvas.height); saveState(); };
-    colorPick.oninput=(e)=>{ wbColor=e.target.value; wbHighlightColor=wbColor+'aa'; updateStyle(); };
-    brushSlider.oninput=(e)=>{ wbBrushSize=parseInt(e.target.value); brushVal.innerText=wbBrushSize+'px'; updateStyle(); };
-    fullIcon.onclick=()=>document.documentElement.requestFullscreen();
-    window.addEventListener('resize',()=>resizeWhiteboard());
+    wbCanvas.addEventListener('mousedown', (e) => { if(wbMode==='text') addText(e); else startDraw(e); });
+    wbCanvas.addEventListener('mousemove', draw);
+    wbCanvas.addEventListener('mouseup', stopDraw);
+    wbCanvas.addEventListener('mouseleave', stopDraw);
+    wbCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); if(wbMode==='text') addText(e); else startDraw(e); });
+    wbCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+    wbCanvas.addEventListener('touchend', stopDraw);
+    
+    // Toolbar handlers
+    document.getElementById('penIconBtn').onclick = () => { wbMode='pen'; [penIconBtn, highIconBtn, textIconBtn].forEach(b=>b.classList.remove('active')); penIconBtn.classList.add('active'); updateStyle(); };
+    document.getElementById('highlighterIconBtn').onclick = () => { wbMode='highlighter'; [penIconBtn, highIconBtn, textIconBtn].forEach(b=>b.classList.remove('active')); highIconBtn.classList.add('active'); updateStyle(); };
+    document.getElementById('textIconBtn').onclick = () => { wbMode='text'; [penIconBtn, highIconBtn, textIconBtn].forEach(b=>b.classList.remove('active')); textIconBtn.classList.add('active'); };
+    document.getElementById('clearIconBtn').onclick = () => { wbCtx.fillStyle='#ffffff'; wbCtx.fillRect(0,0,wbCanvas.width,wbCanvas.height); saveState(); };
+    const colorPick = document.getElementById('wbColorPickerIcon');
+    const brushSlider = document.getElementById('wbBrushSliderIcon');
+    const brushVal = document.getElementById('brushSizeVal');
+    colorPick.oninput = (e) => { wbColor = e.target.value; wbHighlightColor = wbColor + 'aa'; updateStyle(); };
+    brushSlider.oninput = (e) => { wbBrushSize = parseInt(e.target.value); brushVal.innerText = wbBrushSize+'px'; updateStyle(); };
+    document.getElementById('fullscreenIconBtn').onclick = () => document.documentElement.requestFullscreen();
+    window.addEventListener('resize', () => resizeWhiteboard());
     resizeWhiteboard();
+    const penIconBtn = document.getElementById('penIconBtn');
+    const highIconBtn = document.getElementById('highlighterIconBtn');
+    const textIconBtn = document.getElementById('textIconBtn');
     
-    // ------------------------------
-    // 3. CROPPED SCREEN RECORDING (excludes toolbar)
-    // ------------------------------
-    let mediaRecorder=null, recordedChunks=[], recordingActive=false, cropOverlayElem=null, currentBounds=null, animFrame=null, activeVideo=null, dispStream=null, micStream=null;
-    const recIndicator=document.getElementById('recIndicator');
-    const cropRecordBtn=document.getElementById('cropRecordIconBtn');
-    const stopRecordBtn=document.getElementById('stopRecordIconBtn');
+    // ======================= CROPPED RECORDING (FIXED) =======================
+    let mediaRecorder = null, recordedChunks = [], recordingActive = false;
+    let cropOverlayElem = null, currentBounds = null;
+    let captureStream = null, displayMediaStream = null, micStream = null;
+    let animationId = null, videoElement = null, cropCanvas = null;
+    const recIndicator = document.getElementById('recIndicator');
+    const cropRecordBtn = document.getElementById('cropRecordIconBtn');
+    const stopRecordBtn = document.getElementById('stopRecordIconBtn');
     
-    async function stopRecordingInternal(save=true) {
-      if(mediaRecorder && (mediaRecorder.state==='recording'||mediaRecorder.state==='paused')) mediaRecorder.stop();
-      if(animFrame) cancelAnimationFrame(animFrame);
-      if(activeVideo){ activeVideo.pause(); activeVideo.srcObject=null; }
-      if(dispStream) dispStream.getTracks().forEach(t=>t.stop());
-      if(micStream) micStream.getTracks().forEach(t=>t.stop());
-      recordingActive=false;
+    async function stopRecordingAndSave() {
+      if (mediaRecorder && (mediaRecorder.state === 'recording')) {
+        mediaRecorder.stop();
+      }
+      if (animationId) cancelAnimationFrame(animationId);
+      if (videoElement && videoElement.srcObject) {
+        let tracks = videoElement.srcObject?.getTracks();
+        if(tracks) tracks.forEach(t => t.stop());
+      }
+      if (displayMediaStream) displayMediaStream.getTracks().forEach(t => t.stop());
+      if (micStream) micStream.getTracks().forEach(t => t.stop());
+      recordingActive = false;
       recIndicator.classList.add('hidden');
-      mediaRecorder=null;
     }
     
-    function showCropSelector() {
-      if(cropOverlayElem) return;
-      cropOverlayElem=document.createElement('div');
-      cropOverlayElem.className='crop-overlay';
-      document.body.appendChild(cropOverlayElem);
-      let start={x:0,y:0}, drawing=false, tempBox=null;
-      const updateBox=(x1,y1,x2,y2)=>{
-        if(tempBox) tempBox.remove();
-        const left=Math.min(x1,x2), top=Math.min(y1,y2), w=Math.abs(x2-x1), h=Math.abs(y2-y1);
-        if(w<15||h<15) return;
-        tempBox=document.createElement('div');
-        tempBox.className='selection-box';
-        tempBox.style.left=left+'px'; tempBox.style.top=top+'px';
-        tempBox.style.width=w+'px'; tempBox.style.height=h+'px';
-        cropOverlayElem.appendChild(tempBox);
-        currentBounds={x:left,y:top,width:w,height:h};
-      };
-      cropOverlayElem.addEventListener('mousedown',(e)=>{ if(e.target!==cropOverlayElem) return; drawing=true; start={x:e.clientX,y:e.clientY}; if(tempBox) tempBox.remove(); });
-      cropOverlayElem.addEventListener('mousemove',(e)=>{ if(drawing) updateBox(start.x,start.y,e.clientX,e.clientY); });
-      cropOverlayElem.addEventListener('mouseup',()=>{
-        if(!drawing) return;
-        drawing=false;
-        if(!currentBounds||currentBounds.width<20){ alert("Select larger area"); cropOverlayElem.remove(); cropOverlayElem=null; return; }
-        const bar=document.createElement('div'); bar.className='crop-controls-bar';
-        const confirmBtn=document.createElement('button'); confirmBtn.textContent='✅ Start Recording'; confirmBtn.className='crop-btn crop-confirm';
-        const cancelBtn=document.createElement('button'); cancelBtn.textContent='Cancel'; cancelBtn.className='crop-btn crop-cancel';
-        bar.appendChild(confirmBtn); bar.appendChild(cancelBtn); document.body.appendChild(bar);
-        confirmBtn.onclick=async()=>{ bar.remove(); cropOverlayElem.remove(); cropOverlayElem=null; await startCroppedRecording(currentBounds); };
-        cancelBtn.onclick=()=>{ bar.remove(); cropOverlayElem.remove(); cropOverlayElem=null; };
-      });
+    function cleanupRecording() {
+      if (animationId) cancelAnimationFrame(animationId);
+      if (videoElement) { videoElement.pause(); videoElement.srcObject = null; }
+      if (captureStream) captureStream.getTracks().forEach(t => t.stop());
+      if (displayMediaStream) displayMediaStream.getTracks().forEach(t => t.stop());
+      if (micStream) micStream.getTracks().forEach(t => t.stop());
+      recordingActive = false;
+      recIndicator.classList.add('hidden');
     }
     
     async function startCroppedRecording(bounds) {
-      if(recordingActive){ alert("Recording active"); return; }
+      if (recordingActive) { alert("Recording already in progress! Stop it first."); return; }
       try {
-        const displayStream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
-        const microphone=await navigator.mediaDevices.getUserMedia({audio:true});
-        dispStream=displayStream; micStream=microphone;
-        const cropCanvas=document.createElement('canvas');
-        cropCanvas.width=bounds.width; cropCanvas.height=bounds.height;
-        const ctx=cropCanvas.getContext('2d');
-        const videoEl=document.createElement('video');
-        videoEl.srcObject=displayStream; videoEl.autoplay=true; videoEl.muted=true;
-        await videoEl.play();
-        activeVideo=videoEl;
-        const drawFrame=()=>{ if(!recordingActive) return; if(videoEl.videoWidth) ctx.drawImage(videoEl, bounds.x,bounds.y,bounds.width,bounds.height,0,0,bounds.width,bounds.height); animFrame=requestAnimationFrame(drawFrame); };
-        drawFrame();
-        const canvasStream=cropCanvas.captureStream(30);
-        const audioTracks=[...displayStream.getAudioTracks(),...microphone.getAudioTracks()];
-        const finalStream=new MediaStream([...canvasStream.getVideoTracks(),...audioTracks]);
-        mediaRecorder=new MediaRecorder(finalStream,{mimeType:'video/webm'});
-        recordedChunks=[];
-        mediaRecorder.ondataavailable=e=>{ if(e.data.size) recordedChunks.push(e.data); };
-        mediaRecorder.onstop=()=>{
-          if(recordedChunks.length){
-            const blob=new Blob(recordedChunks,{type:'video/webm'});
-            const url=URL.createObjectURL(blob);
-            const a=document.createElement('a');
-            a.href=url;
-            a.download=`recording_${Date.now()}.webm`;
+        // Request screen + audio
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        const microphone = await navigator.mediaDevices.getUserMedia({ audio: true });
+        displayMediaStream = screenStream;
+        micStream = microphone;
+        
+        // Setup hidden canvas for cropping
+        cropCanvas = document.createElement('canvas');
+        cropCanvas.width = bounds.width;
+        cropCanvas.height = bounds.height;
+        const ctx = cropCanvas.getContext('2d');
+        
+        videoElement = document.createElement('video');
+        videoElement.srcObject = screenStream;
+        videoElement.muted = true;
+        videoElement.autoplay = true;
+        await videoElement.play();
+        
+        function drawCroppedFrame() {
+          if (!recordingActive) return;
+          if (videoElement.videoWidth && videoElement.videoHeight) {
+            ctx.drawImage(videoElement, bounds.x, bounds.y, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
+          }
+          animationId = requestAnimationFrame(drawCroppedFrame);
+        }
+        drawCroppedFrame();
+        
+        // Get cropped canvas stream
+        const canvasStream = cropCanvas.captureStream(30);
+        // Merge audio from screen and mic
+        const audioTracks = [...screenStream.getAudioTracks(), ...microphone.getAudioTracks()];
+        const finalStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
+        
+        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm' });
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          if (recordedChunks.length) {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bioclass_recording_${Date.now()}.webm`;
             a.click();
             URL.revokeObjectURL(url);
+            alert("✅ Recording saved! Check your downloads folder.");
           }
-          stopRecordingInternal(false);
+          cleanupRecording();
         };
         mediaRecorder.start(1000);
-        recordingActive=true;
+        recordingActive = true;
         recIndicator.classList.remove('hidden');
-        displayStream.getVideoTracks()[0].onended=()=>{ if(mediaRecorder?.state==='recording') stopRecordingInternal(true); };
-      } catch(err){ alert("Error: "+err.message); stopRecordingInternal(false); }
+        
+        // Stop recording if user ends screen share
+        screenStream.getVideoTracks()[0].onended = () => {
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            alert("Screen sharing stopped. Recording will be saved.");
+            mediaRecorder.stop();
+          }
+        };
+      } catch (err) {
+        console.error(err);
+        alert("Recording error: " + err.message + "\nMake sure you allowed screen + microphone access.");
+        cleanupRecording();
+      }
     }
     
-    stopRecordBtn.onclick=()=>{ if(recordingActive) stopRecordingInternal(true); else alert("No active recording"); };
-    cropRecordBtn.onclick=()=>{ if(recordingActive) alert("Stop current recording first"); else showCropSelector(); };
+    function showCropSelector() {
+      if (cropOverlayElem) return;
+      if (recordingActive) { alert("Stop current recording before selecting new area."); return; }
+      cropOverlayElem = document.createElement('div');
+      cropOverlayElem.className = 'crop-overlay';
+      document.body.appendChild(cropOverlayElem);
+      let start = { x: 0, y: 0 }, drawing = false, tempBox = null;
+      let selection = null;
+      
+      const updateBox = (x1, y1, x2, y2) => {
+        if (tempBox) tempBox.remove();
+        const left = Math.min(x1, x2), top = Math.min(y1, y2);
+        const w = Math.abs(x2 - x1), h = Math.abs(y2 - y1);
+        if (w < 15 || h < 15) return;
+        tempBox = document.createElement('div');
+        tempBox.className = 'selection-box';
+        tempBox.style.left = left + 'px';
+        tempBox.style.top = top + 'px';
+        tempBox.style.width = w + 'px';
+        tempBox.style.height = h + 'px';
+        cropOverlayElem.appendChild(tempBox);
+        selection = { x: left, y: top, width: w, height: h };
+      };
+      
+      cropOverlayElem.addEventListener('mousedown', (e) => {
+        if (e.target !== cropOverlayElem) return;
+        drawing = true;
+        start = { x: e.clientX, y: e.clientY };
+        if (tempBox) tempBox.remove();
+        tempBox = null;
+      });
+      
+      cropOverlayElem.addEventListener('mousemove', (e) => {
+        if (drawing) updateBox(start.x, start.y, e.clientX, e.clientY);
+      });
+      
+      cropOverlayElem.addEventListener('mouseup', () => {
+        if (!drawing) return;
+        drawing = false;
+        if (!selection || selection.width < 30) {
+          alert("Please select a larger area (at least 30px wide).");
+          cropOverlayElem.remove();
+          cropOverlayElem = null;
+          return;
+        }
+        const bar = document.createElement('div');
+        bar.className = 'crop-controls-bar';
+        const confirmBtn = document.createElement('button');
+        confirmBtn.textContent = '🎥 START RECORDING (Screen+Mic)';
+        confirmBtn.className = 'crop-btn crop-confirm';
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = '❌ Cancel';
+        cancelBtn.className = 'crop-btn crop-cancel';
+        bar.appendChild(confirmBtn);
+        bar.appendChild(cancelBtn);
+        document.body.appendChild(bar);
+        
+        confirmBtn.onclick = async () => {
+          bar.remove();
+          cropOverlayElem.remove();
+          cropOverlayElem = null;
+          await startCroppedRecording(selection);
+        };
+        cancelBtn.onclick = () => {
+          bar.remove();
+          cropOverlayElem.remove();
+          cropOverlayElem = null;
+        };
+      });
+    }
     
-    // ------------------------------
-    // 4. SLIDES
-    // ------------------------------
-    const slidesIframe=document.getElementById('slidesIframe');
-    const linkInput=document.getElementById('slideLinkInput');
-    const loadBtn=document.getElementById('loadSlideBtn');
-    const resetCtrl=document.getElementById('resetControlsBtn');
-    const linkControls=document.getElementById('linkControls');
-    function extractEmbed(url){
-      let u=url.trim();
-      const m=u.match(/\/d\/([a-zA-Z0-9_-]+)/);
-      if(m) return `https://docs.google.com/presentation/d/${m[1]}/embed?start=false&loop=false`;
-      if(u.includes('/embed')) return u;
+    stopRecordBtn.onclick = () => {
+      if (recordingActive && mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      } else {
+        alert("No active recording to stop.");
+      }
+    };
+    cropRecordBtn.onclick = () => {
+      if (recordingActive) alert("Please stop current recording before selecting new crop area.");
+      else showCropSelector();
+    };
+    
+    // ======================= SLIDES MODULE =======================
+    const slidesIframe = document.getElementById('slidesIframe');
+    const linkInput = document.getElementById('slideLinkInput');
+    const loadBtn = document.getElementById('loadSlideBtn');
+    const resetCtrl = document.getElementById('resetControlsBtn');
+    const linkControls = document.getElementById('linkControls');
+    function extractEmbed(url) {
+      let u = url.trim();
+      const match = u.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match) return `https://docs.google.com/presentation/d/${match[1]}/embed?start=false&loop=false`;
+      if (u.includes('/embed')) return u;
       return u;
     }
-    loadBtn.onclick=()=>{ let link=linkInput.value; if(!link){ alert("Paste link"); return; } slidesIframe.src=extractEmbed(link); linkControls.classList.add('hide-controls'); };
-    resetCtrl.onclick=()=>linkControls.classList.remove('hide-controls');
-    linkInput.value="https://docs.google.com/presentation/d/1VY6gOqF4nZ0B-KaYRqNoKAzN_KlQrXzv82yNzNuxz1A/edit?usp=sharing";
+    loadBtn.onclick = () => {
+      let link = linkInput.value;
+      if (!link) { alert("Paste a Google Slides link"); return; }
+      slidesIframe.src = extractEmbed(link);
+      linkControls.classList.add('hide-controls');
+    };
+    resetCtrl.onclick = () => linkControls.classList.remove('hide-controls');
+    linkInput.value = "https://docs.google.com/presentation/d/1VY6gOqF4nZ0B-KaYRqNoKAzN_KlQrXzv82yNzNuxz1A/edit?usp=sharing";
     
     // TABS
-    const wbPage=document.getElementById('whiteboardPage'), slidesPage=document.getElementById('slidesPage'), wbTab=document.getElementById('whiteboardTabBtn'), slidesTab=document.getElementById('slidesTabBtn');
-    wbTab.onclick=()=>{ wbPage.classList.add('active-page'); slidesPage.classList.remove('active-page'); wbTab.classList.add('active'); slidesTab.classList.remove('active'); resizeWhiteboard(); };
-    slidesTab.onclick=()=>{ slidesPage.classList.add('active-page'); wbPage.classList.remove('active-page'); slidesTab.classList.add('active'); wbTab.classList.remove('active'); };
+    const wbPage = document.getElementById('whiteboardPage'), slidesPage = document.getElementById('slidesPage');
+    const wbTab = document.getElementById('whiteboardTabBtn'), slidesTab = document.getElementById('slidesTabBtn');
+    wbTab.onclick = () => { wbPage.classList.add('active-page'); slidesPage.classList.remove('active-page'); wbTab.classList.add('active'); slidesTab.classList.remove('active'); resizeWhiteboard(); };
+    slidesTab.onclick = () => { slidesPage.classList.add('active-page'); wbPage.classList.remove('active-page'); slidesTab.classList.add('active'); wbTab.classList.remove('active'); };
   })();
 </script>
 </body>
